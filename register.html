@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#1a3a6b">
+<title>Member Registration — Ebenezer Worship Centre Taifa</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--pr:#1a3a6b;--gr:#2d6a4f;--rd:#c0392b;--bd:#dee2e6;--tx:#212529;--tx2:#6c757d;--ra:8px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a3a6b,#2d6a4f);padding:20px;text-align:center;color:#fff}
+.header img{width:70px;height:70px;border-radius:50%;border:3px solid rgba(255,255,255,0.5);background:#fff;padding:3px;object-fit:contain;margin-bottom:10px}
+.header h1{font-size:18px;font-weight:700}
+.header p{font-size:12px;opacity:0.85;margin-top:4px}
+.header .step-bar{display:flex;justify-content:center;gap:8px;margin-top:16px;flex-wrap:wrap}
+.step{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;border:1.5px solid rgba(255,255,255,0.3)}
+.step.active{background:#fff;color:var(--pr)}
+.step.done{background:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.6)}
+.container{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)}
+.section-head{background:linear-gradient(135deg,#1a3a6b,#2d6a4f);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;font-weight:700}
+.section-head span{opacity:0.8;font-size:11px;font-weight:400;display:block;margin-top:3px}
+label{font-size:12px;color:var(--tx2);display:block;margin-bottom:4px;font-weight:500}
+input,select,textarea{width:100%;font-size:13px;padding:9px 11px;border:1.5px solid var(--bd);border-radius:var(--ra);background:#fff;color:var(--tx);outline:none;transition:border-color 0.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(26,58,107,0.1)}
+input.error,select.error{border-color:var(--rd)}
+.fr{margin-bottom:11px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:400px){.fg{grid-template-columns:1fr}}
+.required::after{content:' *';color:var(--rd)}
+.btn{width:100%;padding:13px;border-radius:var(--ra);border:none;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.btn-primary{background:var(--pr);color:#fff}
+.btn-primary:hover{background:#142d54}
+.btn-next{background:var(--gr);color:#fff}
+.btn-back{background:#f8f9fa;color:var(--tx);border:1.5px solid var(--bd)}
+.nav-btns{display:flex;gap:10px;margin-top:10px}
+.nav-btns .btn{margin-top:0}
+.rank-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.rank-card{border:2px solid var(--bd);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.18s}
+.rank-card:hover{border-color:var(--pr);background:#f0f4ff}
+.rank-card.selected{background:var(--pr);border-color:var(--pr);color:#fff}
+.rank-card .ri{font-size:22px;display:block;margin-bottom:5px}
+.rank-card .rn{font-size:10.5px;font-weight:700;line-height:1.2}
+.rank-card .rd{font-size:9px;color:inherit;opacity:0.7;margin-top:2px}
+.rank-card.selected .rd{opacity:0.85}
+.success-screen{display:none;text-align:center;padding:30px 20px}
+.success-screen .icon{font-size:60px;margin-bottom:16px}
+.success-screen h2{font-size:20px;font-weight:700;color:var(--gr);margin-bottom:8px}
+.success-screen p{font-size:13px;color:var(--tx2);line-height:1.6}
+.err-msg{color:var(--rd);font-size:11.5px;margin-top:4px;display:none}
+.err-msg.show{display:block}
+.progress-bar{height:4px;background:#e9ecef;border-radius:2px;margin-top:12px;overflow:hidden}
+.progress-fill{height:100%;background:#fff;border-radius:2px;transition:width 0.3s}
+.hint{font-size:10.5px;color:var(--tx2);margin-top:3px}
+.required-note{font-size:11px;color:var(--rd);margin-bottom:12px}
+.photo-area{display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fa;border-radius:8px;border:1.5px dashed var(--bd);cursor:pointer}
+.photo-area img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--bd)}
+.photo-preview-wrap{position:relative;display:inline-block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://image.pngaaa.com/448/4569448-middle.png" alt="COP Logo" onerror="this.style.display='none'">
+  <h1>Ebenezer Worship Centre — Taifa</h1>
+  <p>The Church of Pentecost · Member Registration Form</p>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+  <div class="step-bar">
+    <div class="step active" id="s1">1. Office</div>
+    <div class="step" id="s2">2. Personal</div>
+    <div class="step" id="s3">3. Contact</div>
+    <div class="step" id="s4">4. Church</div>
+    <div class="step" id="s5">5. Next of Kin</div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="formWrap">
+
+  <!-- ── STEP 1: CHURCH OFFICE ── -->
+  <div class="step-content active" id="step1">
+    <div class="section-head">⛪ Step 1: Church Office / Rank
+      <span>Select your current position in the church</span>
+    </div>
+    <div class="required-note">Fields marked * are required</div>
+    <div class="rank-grid" id="rankGrid"></div>
+    <input type="hidden" id="f_rank" value="Member">
+    <div class="err-msg" id="e_rank">Please select your church rank</div>
+    <div class="fr"><label>Ministry / department</label>
+      <select id="f_min">
+        <option value="">None / not assigned</option>
+        <option>Choir</option><option>Ushers</option><option>Youth</option>
+        <option>Women's Ministry</option><option>Men's Ministry</option>
+        <option>Children's Ministry</option><option>Media Team</option>
+        <option>Prayer Band</option><option>Evangelism Team</option>
+        <option>Welfare</option><option>Administration</option>
+        <option>Elders / Deacons</option>
+      </select>
+    </div>
+    <div class="fr"><label>Home cell group</label>
+      <select id="f_cel">
+        <option value="">Not yet assigned</option>
+        <option>Cell 1</option><option>Cell 2</option><option>Cell 3</option><option>New Convert</option>
+      </select>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Holy Ghost baptism</label>
+        <select id="f_hgb"><option value="No">No</option><option value="Yes">Yes</option></select>
+      </div>
+      <div class="fr"><label>Water baptism date</label><input type="date" id="f_bap"></div>
+    </div>
+    <button class="btn btn-next" onclick="goStep(2)">Next: Personal information →</button>
+  </div>
+
+  <!-- ── STEP 2: PERSONAL INFORMATION ── -->
+  <div class="step-content" id="step2" style="display:none">
+    <div class="section-head">📋 Step 2: Personal information
+      <span>Your full name, date of birth, and occupation</span>
+    </div>
+    <div class="fr">
+      <label class="required">Passport photo (optional but recommended)</label>
+      <div class="photo-area" onclick="document.getElementById('photoInput').click()">
+        <img id="photoPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e9ecef'/%3E%3Ccircle cx='20' cy='16' r='6' fill='%23adb5bd'/%3E%3Cellipse cx='20' cy='32' rx='10' ry='7' fill='%23adb5bd'/%3E%3C/svg%3E" alt="Photo">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--pr)">Tap to upload photo</div>
+          <div style="font-size:10.5px;color:var(--tx2);margin-top:2px">JPG or PNG · Max 2MB</div>
+        </div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+      <input type="hidden" id="f_photo">
+    </div>
+    <div class="fg">
+      <div class="fr"><label class="required">First name</label><input id="f_fn" placeholder="First name"><div class="err-msg" id="e_fn">Required</div></div>
+      <div class="fr"><label class="required">Last name / surname</label><input id="f_ln" placeholder="Last name"><div class="err-msg" id="e_ln">Required</div></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label class="required">Gender</label>
+        <select id="f_ge"><option value="Male">Male</option><option value="Female">Female</option></select>
+      </div>
+      <div class="fr"><label class="required">Date of birth</label><input type="date" id="f_dob"><div class="err-msg" id="e_dob">Required</div></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Marital status</label>
+        <select id="f_mar"><option>Single</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option></select>
+      </div>
+      <div class="fr"><label>Number of children</label><input type="number" id="f_nch" placeholder="0" min="0" value="0"></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Occupation</label><input id="f_oc" placeholder="e.g. Teacher, Nurse, Trader"></div>
+      <div class="fr"><label>Employer / school / business</label><input id="f_emp" placeholder="Organisation name"></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Hometown / region of origin</label><input id="f_ht" placeholder="e.g. Kumasi, Brong Ahafo"></div>
+      <div class="fr"><label>National ID (Ghana Card no.)</label><input id="f_nid" placeholder="GHA-XXXXXXXXX-X"></div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-back" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-next" onclick="goStep(3)">Next: Contact details →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: CONTACT & ADDRESS ── -->
+  <div class="step-content" id="step3" style="display:none">
+    <div class="section-head">📞 Step 3: Contact & address
+      <span>Your phone number (WhatsApp), email and home address</span>
+    </div>
+    <div class="fg">
+      <div class="fr"><label class="required">Phone number (WhatsApp)</label>
+        <input id="f_ph" placeholder="0244 000 000" type="tel">
+        <div class="hint">This will be used to send you church updates</div>
+        <div class="err-msg" id="e_ph">Phone number is required</div>
+      </div>
+      <div class="fr"><label>Alternate / home phone</label><input id="f_ph2" placeholder="0244 000 000" type="tel"></div>
+    </div>
+    <div class="fr"><label>Email address</label><input type="email" id="f_em" placeholder="email@example.com"></div>
+    <div class="fr"><label>Residential address</label>
+      <input id="f_adr" placeholder="House no., street, area / suburb, city">
+      <div class="hint">Your current place of residence</div>
+    </div>
+    <div class="fr"><label>Ghana Post GPS digital address</label>
+      <input id="f_gps" placeholder="e.g. GA-123-4567">
+      <div class="hint">Find your GPS address at ghanapostgps.com</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-back" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-next" onclick="goStep(4)">Next: Church history →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 4: CHURCH MEMBERSHIP ── -->
+  <div class="step-content" id="step4" style="display:none">
+    <div class="section-head">✝️ Step 4: Church membership history
+      <span>How and when you joined this assembly</span>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Date you joined this assembly</label><input type="date" id="f_jd"></div>
+      <div class="fr"><label>How did you join?</label>
+        <select id="f_hj"><option>Baptism</option><option>Transfer</option><option>New birth</option><option>Return</option></select>
+      </div>
+    </div>
+    <div class="fr"><label>Previous assembly / church (if transferred)</label>
+      <input id="f_prevAssembly" placeholder="Name of previous assembly or church">
+    </div>
+    <div class="fr"><label>Membership status</label>
+      <select id="f_st"><option value="active">Active member</option><option value="inactive">Inactive</option></select>
+    </div>
+    <div class="fr" style="background:#f8f9fa;border-radius:8px;padding:12px;border:1px solid var(--bd)">
+      <label style="color:var(--pr);font-weight:600;font-size:12.5px">📢 How did you hear about Ebenezer Worship Centre?</label>
+      <select id="f_how" style="margin-top:6px">
+        <option>From a church member (friend/family)</option>
+        <option>Evangelism / street outreach</option>
+        <option>Social media</option>
+        <option>Crusade / convention</option>
+        <option>I was born into the church</option>
+        <option>Walk-in</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-back" onclick="goStep(3)">← Back</button>
+      <button class="btn btn-next" onclick="goStep(5)">Next: Next of kin →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 5: NEXT OF KIN ── -->
+  <div class="step-content" id="step5" style="display:none">
+    <div class="section-head">🆘 Step 5: Next of kin & notes
+      <span>Emergency contact and any additional information</span>
+    </div>
+    <div class="card" style="border-left:4px solid #e74c3c;padding:14px">
+      <div style="font-size:12px;font-weight:600;color:#c0392b;margin-bottom:10px">🆘 Primary next of kin (emergency contact)</div>
+      <div class="fg">
+        <div class="fr"><label class="required">Full name</label>
+          <input id="f_nokN" placeholder="Full name of next of kin">
+          <div class="err-msg" id="e_nokN">Required</div>
+        </div>
+        <div class="fr"><label class="required">Telephone number</label>
+          <input id="f_nokP" placeholder="0244 000 000" type="tel">
+          <div class="err-msg" id="e_nokP">Required</div>
+        </div>
+      </div>
+      <div class="fr"><label>Relationship to you</label>
+        <input id="f_nokR" placeholder="e.g. Spouse, Father, Mother, Sister, Brother">
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #f39c12;padding:14px;margin-top:0">
+      <div style="font-size:12px;font-weight:600;color:#d4860a;margin-bottom:10px">👤 Second emergency contact (optional)</div>
+      <div class="fg">
+        <div class="fr"><label>Full name</label><input id="f_ecn" placeholder="Second contact name (optional)"></div>
+        <div class="fr"><label>Telephone number</label><input id="f_ecp" placeholder="0244 000 000" type="tel"></div>
+      </div>
+      <div class="fr"><label>Relationship</label><input id="f_ecr" placeholder="e.g. Employer, Church leader"></div>
+    </div>
+    <div class="fr"><label>Prayer points / special needs / disabilities</label>
+      <textarea id="f_nts" rows="3" placeholder="Share any prayer requests, disabilities, or special information you'd like the pastor to know…"></textarea>
+    </div>
+    <div style="background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px;font-size:11.5px;color:var(--tx2);line-height:1.6">
+      <strong style="color:var(--pr)">🔒 Privacy notice:</strong> Your information will only be used by Ebenezer Worship Centre — Taifa (The Church of Pentecost) for pastoral care and church administration. It will not be shared with any third party.
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-back" onclick="goStep(4)">← Back</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">✅ Submit registration</button>
+    </div>
+    <div class="err-msg" id="e_submit" style="text-align:center;margin-top:8px"></div>
+  </div>
+
+  </div><!-- end formWrap -->
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="successScreen">
+    <div class="icon">🎉</div>
+    <h2>Registration submitted!</h2>
+    <p>Thank you for registering with <strong>Ebenezer Worship Centre — Taifa</strong>.<br><br>
+    Your information has been received and will be reviewed by the church leadership. You will be contacted shortly to confirm your membership.<br><br>
+    <strong>God bless you!</strong></p>
+    <div style="margin-top:20px;padding:14px;background:#f0f9f4;border-radius:8px;font-size:12px;color:var(--gr);border:1px solid #b2d8c4">
+      📞 For enquiries, contact the church on WhatsApp or visit during service hours.
+    </div>
+  </div>
+
+</div><!-- end container -->
+
+<script>
+const RANKS=[
+  {val:'Member',      icon:'🙏', name:'Member',            desc:'Regular member'},
+  {val:'New Convert', icon:'✝️',  name:'New Convert',        desc:'Recently born again'},
+  {val:'Deaconess',  icon:'👩', name:'Deaconess',           desc:'Ordained deaconess'},
+  {val:'Deacon',     icon:'🤝', name:'Deacon',              desc:'Ordained deacon'},
+  {val:'Elder',      icon:'📖', name:'Elder',               desc:'Ordained elder'},
+  {val:'Presiding Elder',icon:'🏛️',name:'Presiding Elder',  desc:'Presiding elder'},
+  {val:'Resident Pastor',icon:'✉️',name:'Resident Pastor',  desc:'District pastor'},
+  {val:'Area Head',  icon:'🌍', name:'Area Head',           desc:'Area / regional head'},
+  {val:'Apostle',    icon:'⭐', name:'Apostle',             desc:'Senior leader'},
+];
+
+// Build rank grid
+const rg=document.getElementById('rankGrid');
+RANKS.forEach(function(r){
+  const d=document.createElement('div');
+  d.className='rank-card'+(r.val==='Member'?' selected':'');
+  d.innerHTML='<span class="ri">'+r.icon+'</span><span class="rn">'+r.name+'</span><span class="rd">'+r.desc+'</span>';
+  d.onclick=function(){
+    document.querySelectorAll('.rank-card').forEach(c=>c.classList.remove('selected'));
+    d.classList.add('selected');
+    document.getElementById('f_rank').value=r.val;
+    document.getElementById('e_rank').style.display='none';
+  };
+  rg.appendChild(d);
+});
+
+// Get token from URL
+const urlParams=new URLSearchParams(window.location.search);
+const TOKEN=urlParams.get('token')||'';
+const API_BASE=window.location.origin;
+
+let currentStep=1;
+function goStep(n){
+  if(n>currentStep&&!validateStep(currentStep))return;
+  document.getElementById('step'+currentStep).style.display='none';
+  document.querySelectorAll('.step').forEach(function(s,i){
+    s.classList.remove('active');
+    if(i+1<n)s.classList.add('done');
+    if(i+1===n)s.classList.add('active');
+  });
+  document.getElementById('step'+n).style.display='block';
+  document.getElementById('progressFill').style.width=(n/5*100)+'%';
+  currentStep=n;
+  window.scrollTo(0,0);
+}
+
+function validateStep(s){
+  let ok=true;
+  function req(id,errId){const el=document.getElementById(id);const v=(el.value||'').trim();const e=document.getElementById(errId);if(!v){e.style.display='block';ok=false;}else{e.style.display='none';}return !!v;}
+  if(s===1){/* rank always set */}
+  if(s===2){req('f_fn','e_fn');req('f_ln','e_ln');req('f_dob','e_dob');}
+  if(s===3){req('f_ph','e_ph');}
+  if(s===5){req('f_nokN','e_nokN');req('f_nokP','e_nokP');}
+  return ok;
+}
+
+function handlePhoto(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>2*1024*1024){alert('Photo must be under 2MB');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('photoPreview').src=e.target.result;
+    document.getElementById('f_photo').value=e.target.result;
+  };reader.readAsDataURL(file);
+}
+
+async function submitForm(){
+  if(!validateStep(5))return;
+  const btn=document.getElementById('submitBtn');
+  btn.textContent='⏳ Submitting…';btn.disabled=true;
+  const data={
+    token:TOKEN,
+    rank:document.getElementById('f_rank').value,
+    min:document.getElementById('f_min').value,
+    cel:document.getElementById('f_cel').value,
+    hgb:document.getElementById('f_hgb').value,
+    bap:document.getElementById('f_bap').value,
+    photo:document.getElementById('f_photo').value,
+    fn:document.getElementById('f_fn').value.trim(),
+    ln:document.getElementById('f_ln').value.trim(),
+    ge:document.getElementById('f_ge').value,
+    dob:document.getElementById('f_dob').value,
+    mar:document.getElementById('f_mar').value,
+    nch:document.getElementById('f_nch').value||0,
+    oc:document.getElementById('f_oc').value.trim(),
+    emp:document.getElementById('f_emp').value.trim(),
+    ht:document.getElementById('f_ht').value.trim(),
+    nid:document.getElementById('f_nid').value.trim(),
+    ph:document.getElementById('f_ph').value.trim(),
+    ph2:document.getElementById('f_ph2').value.trim(),
+    em:document.getElementById('f_em').value.trim(),
+    adr:document.getElementById('f_adr').value.trim(),
+    gps:document.getElementById('f_gps').value.trim(),
+    jd:document.getElementById('f_jd').value,
+    hj:document.getElementById('f_hj').value,
+    st:document.getElementById('f_st').value,
+    nokN:document.getElementById('f_nokN').value.trim(),
+    nokP:document.getElementById('f_nokP').value.trim(),
+    nokR:document.getElementById('f_nokR').value.trim(),
+    ecn:document.getElementById('f_ecn').value.trim(),
+    ecp:document.getElementById('f_ecp').value.trim(),
+    ecr:document.getElementById('f_ecr').value.trim(),
+    nts:document.getElementById('f_nts').value.trim(),
+  };
+  try{
+    const resp=await fetch(API_BASE+'/api/self-register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const result=await resp.json();
+    if(result.success){
+      document.getElementById('formWrap').style.display='none';
+      document.getElementById('successScreen').style.display='block';
+    }else{
+      const e=document.getElementById('e_submit');e.textContent=result.error||'Submission failed. Please try again.';e.style.display='block';
+      btn.textContent='✅ Submit registration';btn.disabled=false;
+    }
+  }catch(err){
+    const e=document.getElementById('e_submit');e.textContent='Network error. Please check your connection and try again.';e.style.display='block';
+    btn.textContent='✅ Submit registration';btn.disabled=false;
+  }
+}
+</script>
+</body>
+</html>

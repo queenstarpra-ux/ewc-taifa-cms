@@ -1,0 +1,2 @@
+# No external dependencies — pure Python 3 standard library only
+# Works on Railway, Render, any VPS, or your local computer

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ewc-cms-taifa
+    runtime: python
+    buildCommand: echo "No build needed"
+    startCommand: python server.py
+    envVars:
+      - key: EWC_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
+    disk:
+      name: ewc-database
+      mountPath: /data
+      sizeGB: 1
