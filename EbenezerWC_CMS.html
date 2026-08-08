@@ -153,7 +153,7 @@ tr:hover td{background:#fafafa}
 </head>
 <body>
 
-<div id="authWrap">
+<div id="authWrap" style="display:none">
   <div class="auth-box">
     <div class="auth-logo">
       <img src="https://image.pngaaa.com/448/4569448-middle.png" alt="COP Logo" onerror="this.style.display='none';document.getElementById('authLogoFB').style.display='flex'">
@@ -1783,37 +1783,6 @@ const DB = {
 };
 const _cache = {};
 
-async function loadAll() {
-  showLoader(true);
-  const [m,t,e,a,c,b,ev,pr,wk,xf,or_,mm,hgb,sp,sc,users,cfg,eq,mt] = await Promise.all([
-    get('members'), get('tithes'), get('expenses'), get('attendance'),
-    get('converts'), get('beneficiaries'), get('events'), get('prayer_requests'),
-    get('weekly_records'), get('transfers'), get('outreach'), get('ministry_meetings'),
-    get('holy_ghost_baptisms'), get('special_events'), get('scholarships'),
-    get('users'), get('config'), get('equipment'), get('maintenance')
-  ]);
-  DB.m  = m    || [];
-  DB.t  = (t   || []).map(x=>({...x, amt:x.amt||0, dt:x.dt||'', cat:x.cat||'', mid:x.mid||'', mth:x.mth||'Cash', rcv:x.rcv||'', not:x.not_||''}));
-  DB.e  = e    || [];
-  DB.a  = a    || [];
-  DB.c  = c    || [];
-  DB.b  = b    || [];
-  DB.ev = ev   || [];
-  DB.pr = pr   || [];
-  DB.wk = wk   || [];
-  DB.xf = xf   || [];
-  DB.or = or_  || [];
-  DB.mm = mm   || [];
-  DB.hgb= hgb  || [];
-  DB.sp = sp   || [];
-  DB.sc = sc   || [];
-  DB.eq = eq   || [];
-  DB.mt = mt   || [];
-  DB.users = users || [];
-  DB.cfg = cfg || {};
-  showLoader(false);
-}
-
 function showLoader(show) {
   let el = document.getElementById('globalLoader');
   if (!el) {
@@ -2034,16 +2003,30 @@ async function doRegister(){
 }
 
 async function bootApp(){
-  document.getElementById('authWrap').style.display='none';
-  // Show assembly selection screen
-  document.getElementById('asmSelectWrap').style.display='flex';
+  const authEl=document.getElementById('authWrap');
+  const asmEl=document.getElementById('asmSelectWrap');
+  const mainEl=document.getElementById('mainApp');
+  if(authEl) authEl.style.display='none';
+  if(asmEl)  asmEl.style.display='flex';
+  if(mainEl) mainEl.style.display='none';
+  // Show current user in assembly selector
+  const uEl=document.getElementById('asmUserName');
+  if(uEl) uEl.textContent=(currentUser.fn||'')+' '+(currentUser.ln||'');
+  // Load live member counts for the assembly buttons
+  setTimeout(loadAssemblyData,300);
 }
 
 async function enterAssembly(asm){
   _currentAssembly = asm;
   localStorage.setItem('ewc_assembly', asm);
-  document.getElementById('asmSelectWrap').style.display='none';
-  document.getElementById('mainApp').style.display='flex';
+
+  // Transition screens
+  const asmEl=document.getElementById('asmSelectWrap');
+  const mainEl=document.getElementById('mainApp');
+  const authEl=document.getElementById('authWrap');
+  if(asmEl)  asmEl.style.display='none';
+  if(authEl) authEl.style.display='none';
+  if(mainEl) mainEl.style.display='flex';
 
   // Update assembly badge in header
   updateAsmBadge();
@@ -2272,54 +2255,92 @@ function manageSavedAccounts(){
 }
 function showUserMenu(){ if(confirm('Sign out of the system?')) signOut(); }
 
-// Auto-login from stored token — keeps user signed in when online
-(function(){
-  const storedUser=localStorage.getItem('ewc_user');
+// ── Auto-login & refresh protection ─────────────────────────────
+// This runs immediately when the page loads.
+// It prevents the blank screen on refresh by always showing SOMETHING.
+(function initApp(){
+  // Always start with auth screen visible, others hidden
+  const authEl  = document.getElementById('authWrap');
+  const asmEl   = document.getElementById('asmSelectWrap');
+  const mainEl  = document.getElementById('mainApp');
+
+  function showAuth(){
+    if(authEl)  authEl.style.display  = 'flex';
+    if(asmEl)   asmEl.style.display   = 'none';
+    if(mainEl)  mainEl.style.display  = 'none';
+  }
+  function showAsm(){
+    if(authEl)  authEl.style.display  = 'none';
+    if(asmEl)   asmEl.style.display   = 'flex';
+    if(mainEl)  mainEl.style.display  = 'none';
+  }
+
+  // If we have a stored token + user, try to restore the session
+  const storedUser = localStorage.getItem('ewc_user');
   if(AUTH_TOKEN && storedUser){
     try{
-      currentUser=JSON.parse(storedUser);
-      // Show assembly selector (not app directly)
-      bootApp();
-      // Pre-populate assembly selector counts
-      setTimeout(loadAssemblyData, 500);
-      // Then silently verify token is still valid with server
-      fetch(API_BASE+'/api/dashboard',{headers:{Authorization:'Bearer '+AUTH_TOKEN}})
-        .then(function(r){
-          if(r.status===401){
-            // Token expired — try to auto-refresh using saved credentials
-            const accounts=getSavedAccounts();
-            if(accounts.length){
-              const saved=accounts[0];
-              try{
-                const pw=decodeURIComponent(escape(atob(saved.enc)));
-                fetch(API_BASE+'/api/login',{
-                  method:'POST',
-                  headers:{'Content-Type':'application/json'},
-                  body:JSON.stringify({username:saved.username,password:pw})
-                }).then(function(lr){
-                  if(lr.ok)lr.json().then(function(ld){
-                    if(ld.token){
-                      AUTH_TOKEN=ld.token;
-                      currentUser=ld.user;
-                      localStorage.setItem('ewc_jwt',AUTH_TOKEN);
-                      localStorage.setItem('ewc_user',JSON.stringify(currentUser));
-                      showToast('Session renewed automatically ✅');
-                    }
-                  });
+      currentUser = JSON.parse(storedUser);
+      // Show assembly selector immediately — never blank
+      showAsm();
+      const uEl = document.getElementById('asmUserName');
+      if(uEl) uEl.textContent = (currentUser.fn||'')+' '+(currentUser.ln||'');
+      // Load counts for assembly selector buttons
+      setTimeout(function(){
+        loadAssemblyData().catch(function(){});
+      }, 300);
+      // Silently verify token in background
+      fetch(API_BASE+'/api/dashboard',{
+        headers:{Authorization:'Bearer '+AUTH_TOKEN}
+      }).then(function(r){
+        if(r.status===401){
+          // Token expired — try saved credentials
+          const accounts = getSavedAccounts();
+          if(accounts.length){
+            const saved = accounts[0];
+            try{
+              const pw = decodeURIComponent(escape(atob(saved.enc)));
+              fetch(API_BASE+'/api/login',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({username:saved.username,password:pw})
+              }).then(function(lr){
+                if(lr.ok) lr.json().then(function(ld){
+                  if(ld.token){
+                    AUTH_TOKEN = ld.token;
+                    currentUser = ld.user;
+                    localStorage.setItem('ewc_jwt', AUTH_TOKEN);
+                    localStorage.setItem('ewc_user', JSON.stringify(currentUser));
+                    showToast('Session renewed ✅');
+                  }
                 });
-              }catch(ex){}
-            } else {
-              // No saved credentials — must sign in again
-              signOut();
-              showToast('Session expired — please sign in again','warn');
-            }
+              }).catch(function(){/* network error — stay on assembly selector */});
+            }catch(ex){}
+          } else {
+            // No saved creds — back to login
+            currentUser = null; AUTH_TOKEN = '';
+            localStorage.removeItem('ewc_jwt');
+            localStorage.removeItem('ewc_user');
+            showAuth();
+            switchAuth('login');
+            setTimeout(initLoginPage, 100);
           }
-        }).catch(function(){/* offline — stay logged in with cached token */});
+        }
+        // 200 = valid token, stay on assembly selector
+      }).catch(function(){
+        // Offline or server not reachable — stay on assembly selector with cached data
+        showToast('Working offline — using saved session', 'warn');
+      });
       return;
-    }catch(e){}
+    }catch(e){
+      // Corrupt stored data
+      localStorage.removeItem('ewc_user');
+    }
   }
+
+  // No stored session — show login
+  showAuth();
   switchAuth('login');
-  setTimeout(initLoginPage,100);
+  setTimeout(initLoginPage, 100);
 })();
 
 // ─── REGISTRATION LINK GENERATOR ──────────────────────────────────
@@ -2345,7 +2366,7 @@ async function shareRegLink(){
   else { window.open(waLink('',''), '_blank'); }
 }
 
-async function checkPendingRegistrations(){
+async async function checkPendingRegistrations(){
   if(currentUser && (currentUser.role==='admin' || currentUser.role==='leader')){
     const pending = await get('pending-registrations');
     if(pending && pending.length > 0){
@@ -2448,8 +2469,15 @@ async function showPendingRegs(){
 async function approveReg(id){
   if(!confirm('Approve this registration and add to member registry?'))return;
   const r=await post('approve-registration/'+id,{});
-  if(r&&r.success){showToast('Member approved and added ✅');await loadAll();renderMembers();showPendingRegs();loadPendingCount();}
-  else showToast('Approval failed','error');
+  if(r&&r.success){
+    await loadAll();
+    renderMembers();
+    renderDashboard();
+    showPendingRegs();
+    loadPendingCount();
+    updateMembersAsmBar();
+    showToast('Member approved and added to '+(_currentAssembly==='akan'?'Akan':'English')+' Assembly ✅');
+  } else showToast('Approval failed','error');
 }
 async function rejectReg(id){
   if(!confirm('Reject this registration?'))return;
@@ -2625,13 +2653,7 @@ function renderDashboard(){
     : '<div class="empty">No transactions recorded yet</div>';
 }
 function renderDashboardBdays(){
-  // kept for backward compatibility — logic merged into renderDashboard
-}
-function renderDashboardExtras(){
-  // kept for backward compatibility — logic merged into renderDashboard
-}
-
-let mFilt='all';
+  let mFilt='all';
 function fMem(f,el){mFilt=f;document.querySelectorAll('#mTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderMembers();}
 function renderMembers(){
   const q=(document.getElementById('mSearch')||{}).value?.toLowerCase()||'';
@@ -2761,8 +2783,15 @@ async function saveMember(){
   obj.assembly=_currentAssembly==='akan'?'Akan':'English';
   const eid=document.getElementById('eid').value;
   let result;
-  if(eid){result=await put('members/'+eid,obj);if(result&&result.success)showToast('Member updated ✅');}
-  else{result=await post('members',obj);if(result&&result.success)showToast('Member added for '+obj.assembly+' Assembly ✅');}
+  if(eid){
+    result=await put('members/'+eid,obj);
+    if(result&&result.success) showToast('Member updated ✅');
+  } else {
+    result=await post('members',obj);
+    if(result&&result.success){
+      showToast('Member added to '+obj.assembly+' Assembly ✅');
+    }
+  }
   if(!result){showToast('Save failed — check server','error');return;}
   closeM('mMember');
   await loadAll();renderMembers();
@@ -3848,7 +3877,7 @@ function filterWk(wk,period,year,month){
   });
 }
 function avg(arr,key){if(!arr.length)return 0;return Math.round(arr.reduce((s,x)=>s+(+x[key]||0),0)/arr.length);}
-function sum(arr,key){return arr.reduce((s,x)=>s+(+x[key]||0),0);}
+function _sumArr(arr,key){return arr.reduce((s,x)=>s+(+x[key]||0),0);}
 function renderStatsReport(){
   const period=document.getElementById('srPeriod').value;
   const year=(document.getElementById('srYear')||{}).value||today.getFullYear().toString();
@@ -3995,19 +4024,6 @@ function exportStatsCSV(){
   const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EWC_StatReport_'+new Date().toISOString().split('T')[0]+'.csv';a.click();showToast('Stats CSV exported ✅');
 }
 
-
-// ===================== COP ANNUAL REPORT =====================
-function initCOPReport(){
-  const sel=document.getElementById('copRptYear');
-  if(!sel)return;
-  const yr=today.getFullYear();
-  sel.innerHTML='';
-  for(let y=yr;y>=yr-5;y--){
-    const o=document.createElement('option');
-    o.value=y;o.textContent=y;
-    sel.appendChild(o);
-  }
-}
 
 function initCOPReport(){
   const yr=today.getFullYear();
