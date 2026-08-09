@@ -2366,7 +2366,7 @@ async function shareRegLink(){
   else { window.open(waLink('',''), '_blank'); }
 }
 
-async async function checkPendingRegistrations(){
+async function checkPendingRegistrations(){
   if(currentUser && (currentUser.role==='admin' || currentUser.role==='leader')){
     const pending = await get('pending-registrations');
     if(pending && pending.length > 0){
@@ -2653,7 +2653,8 @@ function renderDashboard(){
     : '<div class="empty">No transactions recorded yet</div>';
 }
 function renderDashboardBdays(){
-  let mFilt='all';
+  let mFilt='all';}
+
 function fMem(f,el){mFilt=f;document.querySelectorAll('#mTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderMembers();}
 function renderMembers(){
   const q=(document.getElementById('mSearch')||{}).value?.toLowerCase()||'';
