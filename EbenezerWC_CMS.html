@@ -1805,8 +1805,14 @@ function waLink(phone,msg){let p=(phone||'').replace(/[^0-9]/g,'');if(p.startsWi
 
 // ─── AUTH ─────────────────────────────────────────────────────────
 function switchAuth(tab){
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
-  document.querySelectorAll('.auth-sect').forEach((s,i)=>s.classList.toggle('active',i===(tab==='login'?0:1)));
+  var aw=document.getElementById('authWrap');
+  var as=document.getElementById('asmSelectWrap');
+  var ma=document.getElementById('mainApp');
+  if(aw) aw.style.setProperty('display','flex','important');
+  if(as) as.style.setProperty('display','none','important');
+  if(ma) ma.style.setProperty('display','none','important');
+  document.querySelectorAll('.auth-tab').forEach(function(t,i){t.classList.toggle('active',i===(tab==='login'?0:1));});
+  document.querySelectorAll('.auth-sect').forEach(function(s,i){s.classList.toggle('active',i===(tab==='login'?0:1));});
 }
 
 // ── Remember-me helpers ───────────────────────────────────────────
@@ -2006,9 +2012,9 @@ async function bootApp(){
   const authEl=document.getElementById('authWrap');
   const asmEl=document.getElementById('asmSelectWrap');
   const mainEl=document.getElementById('mainApp');
-  if(authEl) authEl.style.display='none';
-  if(asmEl)  asmEl.style.display='flex';
-  if(mainEl) mainEl.style.display='none';
+  if(authEl) authEl.style.setProperty('display','none','important');
+  if(asmEl)  asmEl.style.setProperty('display','flex','important');
+  if(mainEl) mainEl.style.setProperty('display','none','important');
   // Show current user in assembly selector
   const uEl=document.getElementById('asmUserName');
   if(uEl) uEl.textContent=(currentUser.fn||'')+' '+(currentUser.ln||'');
@@ -2236,9 +2242,9 @@ function signOut(){
   currentUser=null;AUTH_TOKEN='';
   localStorage.removeItem('ewc_jwt');
   localStorage.removeItem('ewc_user');
-  document.getElementById('mainApp').style.display='none';
-  document.getElementById('asmSelectWrap').style.display='none';
-  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('mainApp').style.setProperty('display','none','important');
+  document.getElementById('asmSelectWrap').style.setProperty('display','none','important');
+  document.getElementById('authWrap').style.setProperty('display','flex','important');
   document.getElementById('loginPass').value='';
   setTimeout(initLoginPage,100);
 }
@@ -2258,89 +2264,67 @@ function showUserMenu(){ if(confirm('Sign out of the system?')) signOut(); }
 // ── Auto-login & refresh protection ─────────────────────────────
 // This runs immediately when the page loads.
 // It prevents the blank screen on refresh by always showing SOMETHING.
+// ── Startup: always show correct screen, never blank ─────────────
+// Startup — shows correct screen, never blank on refresh
 (function initApp(){
-  // Always start with auth screen visible, others hidden
-  const authEl  = document.getElementById('authWrap');
-  const asmEl   = document.getElementById('asmSelectWrap');
-  const mainEl  = document.getElementById('mainApp');
-
-  function showAuth(){
-    if(authEl)  authEl.style.display  = 'flex';
-    if(asmEl)   asmEl.style.display   = 'none';
-    if(mainEl)  mainEl.style.display  = 'none';
+  function _show(which){
+    ['authWrap','asmSelectWrap','mainApp'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.setProperty('display',id===which?'flex':'none','important');
+    });
   }
-  function showAsm(){
-    if(authEl)  authEl.style.display  = 'none';
-    if(asmEl)   asmEl.style.display   = 'flex';
-    if(mainEl)  mainEl.style.display  = 'none';
-  }
-
-  // If we have a stored token + user, try to restore the session
-  const storedUser = localStorage.getItem('ewc_user');
-  if(AUTH_TOKEN && storedUser){
+  var _tok=localStorage.getItem('ewc_jwt')||'';
+  var _usr=localStorage.getItem('ewc_user')||'';
+  if(_tok&&_usr){
     try{
-      currentUser = JSON.parse(storedUser);
-      // Show assembly selector immediately — never blank
-      showAsm();
-      const uEl = document.getElementById('asmUserName');
-      if(uEl) uEl.textContent = (currentUser.fn||'')+' '+(currentUser.ln||'');
-      // Load counts for assembly selector buttons
+      currentUser=JSON.parse(_usr); AUTH_TOKEN=_tok;
+      _show('asmSelectWrap');
+      var _uEl=document.getElementById('asmUserName');
+      if(_uEl)_uEl.textContent=(currentUser.fn||'')+' '+(currentUser.ln||'');
       setTimeout(function(){
-        loadAssemblyData().catch(function(){});
-      }, 300);
-      // Silently verify token in background
-      fetch(API_BASE+'/api/dashboard',{
-        headers:{Authorization:'Bearer '+AUTH_TOKEN}
-      }).then(function(r){
-        if(r.status===401){
-          // Token expired — try saved credentials
-          const accounts = getSavedAccounts();
-          if(accounts.length){
-            const saved = accounts[0];
-            try{
-              const pw = decodeURIComponent(escape(atob(saved.enc)));
-              fetch(API_BASE+'/api/login',{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({username:saved.username,password:pw})
-              }).then(function(lr){
-                if(lr.ok) lr.json().then(function(ld){
-                  if(ld.token){
-                    AUTH_TOKEN = ld.token;
-                    currentUser = ld.user;
-                    localStorage.setItem('ewc_jwt', AUTH_TOKEN);
-                    localStorage.setItem('ewc_user', JSON.stringify(currentUser));
-                    showToast('Session renewed ✅');
-                  }
-                });
-              }).catch(function(){/* network error — stay on assembly selector */});
-            }catch(ex){}
-          } else {
-            // No saved creds — back to login
-            currentUser = null; AUTH_TOKEN = '';
-            localStorage.removeItem('ewc_jwt');
-            localStorage.removeItem('ewc_user');
-            showAuth();
-            switchAuth('login');
-            setTimeout(initLoginPage, 100);
+        if(typeof loadAssemblyData==='function')loadAssemblyData().catch(function(){});
+      },400);
+      setTimeout(function(){
+        fetch(API_BASE+'/api/dashboard',{headers:{Authorization:'Bearer '+_tok}})
+        .then(function(resp){
+          if(resp.status===401){
+            var accs=(typeof getSavedAccounts==='function')?getSavedAccounts():[];
+            if(accs.length){
+              try{
+                var pw=decodeURIComponent(escape(atob(accs[0].enc)));
+                fetch(API_BASE+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({username:accs[0].username,password:pw})})
+                .then(function(lr){
+                  if(lr.ok)lr.json().then(function(ld){
+                    if(ld.token){AUTH_TOKEN=ld.token;currentUser=ld.user;
+                      localStorage.setItem('ewc_jwt',ld.token);
+                      localStorage.setItem('ewc_user',JSON.stringify(ld.user));}
+                  });
+                }).catch(function(){});
+              }catch(ex){}
+            } else {
+              AUTH_TOKEN='';currentUser=null;
+              localStorage.removeItem('ewc_jwt');localStorage.removeItem('ewc_user');
+              _show('authWrap');
+              if(typeof switchAuth==='function')switchAuth('login');
+              if(typeof initLoginPage==='function')setTimeout(initLoginPage,100);
+            }
           }
-        }
-        // 200 = valid token, stay on assembly selector
-      }).catch(function(){
-        // Offline or server not reachable — stay on assembly selector with cached data
-        showToast('Working offline — using saved session', 'warn');
-      });
-      return;
+        }).catch(function(){
+          if(typeof showToast==='function')showToast('Offline — using saved session','warn');
+        });
+      },800);
     }catch(e){
-      // Corrupt stored data
-      localStorage.removeItem('ewc_user');
+      localStorage.removeItem('ewc_jwt');localStorage.removeItem('ewc_user');
+      _show('authWrap');
+      if(typeof switchAuth==='function')switchAuth('login');
+      if(typeof initLoginPage==='function')setTimeout(initLoginPage,100);
     }
+  } else {
+    _show('authWrap');
+    if(typeof switchAuth==='function')switchAuth('login');
+    if(typeof initLoginPage==='function')setTimeout(initLoginPage,100);
   }
-
-  // No stored session — show login
-  showAuth();
-  switchAuth('login');
-  setTimeout(initLoginPage, 100);
 })();
 
 // ─── REGISTRATION LINK GENERATOR ──────────────────────────────────
@@ -2366,7 +2350,7 @@ async function shareRegLink(){
   else { window.open(waLink('',''), '_blank'); }
 }
 
-async async function checkPendingRegistrations(){
+async function checkPendingRegistrations(){
   if(currentUser && (currentUser.role==='admin' || currentUser.role==='leader')){
     const pending = await get('pending-registrations');
     if(pending && pending.length > 0){
@@ -2653,7 +2637,8 @@ function renderDashboard(){
     : '<div class="empty">No transactions recorded yet</div>';
 }
 function renderDashboardBdays(){
-  let mFilt='all';
+  let mFilt='all';}
+
 function fMem(f,el){mFilt=f;document.querySelectorAll('#mTabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderMembers();}
 function renderMembers(){
   const q=(document.getElementById('mSearch')||{}).value?.toLowerCase()||'';
