@@ -240,6 +240,38 @@ tr:hover td{background:#fafafa}
   </div>
 </div>
 
+
+<!-- ===== ASSEMBLY SELECTION SCREEN ===== -->
+<div id="asmSelectWrap" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0d1f3c,#1a3a6b,#2d6a4f);z-index:8000;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+  <img src="https://image.pngaaa.com/448/4569448-middle.png" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);background:#fff;padding:4px;margin-bottom:20px;object-fit:contain" onerror="this.style.display='none'">
+  <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:6px;text-align:center">Ebenezer Worship Centre — Taifa</div>
+  <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:40px;text-align:center">The Church of Pentecost · Taifa District · Greater Accra</div>
+  <div style="color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase">Select your assembly to continue</div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+    <button onclick="enterAssembly('english')" style="background:#fff;border:none;border-radius:16px;padding:28px 36px;cursor:pointer;width:220px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+      <div style="font-size:44px;margin-bottom:12px">&#127468;&#127463;</div>
+      <div style="font-size:17px;font-weight:700;color:#1a3a6b;margin-bottom:6px">English Assembly</div>
+      <div style="font-size:11px;color:#666;line-height:1.6">English services &amp; programmes</div>
+      <div id="engMemberCount" style="margin-top:12px;background:#e8f0fe;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1a3a6b">Loading...</div>
+    </button>
+    <button onclick="enterAssembly('akan')" style="background:#fff;border:none;border-radius:16px;padding:28px 36px;cursor:pointer;width:220px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+      <div style="font-size:44px;margin-bottom:12px">&#127468;&#127469;</div>
+      <div style="font-size:17px;font-weight:700;color:#2d6a4f;margin-bottom:6px">Akan Assembly</div>
+      <div style="font-size:11px;color:#666;line-height:1.6">Akan services &amp; programmes</div>
+      <div id="aknMemberCount" style="margin-top:12px;background:#e8f5e9;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#2d6a4f">Loading...</div>
+    </button>
+  </div>
+  <div style="margin-top:36px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <button onclick="enterAssembly('all')" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:10px;padding:10px 28px;cursor:pointer;font-size:13px;font-weight:600">
+      &#128065; View all assemblies combined
+    </button>
+    <button onclick="signOut()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:12px;padding:10px">Sign out</button>
+  </div>
+  <div style="position:absolute;bottom:20px;color:rgba(255,255,255,0.4);font-size:11px;text-align:center">
+    Signed in as <strong id="asmUserName" style="color:rgba(255,255,255,0.7)"></strong>
+  </div>
+</div>
+
 <div class="app" id="mainApp" style="display:none">
 <div class="offline-bar" id="offBar">⚠️ You are offline — data saved locally and will sync when online</div>
 <div class="header">
@@ -5868,43 +5900,5 @@ function manageSavedAccountsDetailed(){
 </body>
 </html>
 
-<!-- ===== ASSEMBLY SELECTION SCREEN ===== -->
-<div id="asmSelectWrap" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0d1f3c,#1a3a6b,#2d6a4f);z-index:8000;flex-direction:column;align-items:center;justify-content:center;padding:20px">
-  <img src="https://image.pngaaa.com/448/4569448-middle.png" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);background:#fff;padding:4px;margin-bottom:20px;object-fit:contain" onerror="this.style.display=none">
-  <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:6px;text-align:center">Ebenezer Worship Centre — Taifa</div>
-  <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-bottom:40px;text-align:center">The Church of Pentecost · Taifa District · Greater Accra</div>
-  <div style="color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase">Select your assembly to continue</div>
-  <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
-
-    <!-- English Assembly -->
-    <button onclick="enterAssembly('english')" style="background:#fff;border:none;border-radius:16px;padding:28px 36px;cursor:pointer;width:220px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
-      <div style="font-size:44px;margin-bottom:12px">🇬🇧</div>
-      <div style="font-size:17px;font-weight:700;color:#1a3a6b;margin-bottom:6px">English Assembly</div>
-      <div style="font-size:11px;color:#666;line-height:1.6">English language services<br>and all English programmes</div>
-      <div id="engMemberCount" style="margin-top:12px;background:#e8f0fe;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1a3a6b">Loading...</div>
-    </button>
-
-    <!-- Akan Assembly -->
-    <button onclick="enterAssembly('akan')" style="background:#fff;border:none;border-radius:16px;padding:28px 36px;cursor:pointer;width:220px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3)">
-      <div style="font-size:44px;margin-bottom:12px">🇬🇭</div>
-      <div style="font-size:17px;font-weight:700;color:#2d6a4f;margin-bottom:6px">Akan Assembly</div>
-      <div style="font-size:11px;color:#666;line-height:1.6">Akan language services<br>and all Akan programmes</div>
-      <div id="aknMemberCount" style="margin-top:12px;background:#e8f5e9;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#2d6a4f">Loading...</div>
-    </button>
-  </div>
-
-  <div style="margin-top:36px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center">
-    <button onclick="enterAssembly('all')" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:#fff;border-radius:10px;padding:10px 28px;cursor:pointer;font-size:13px;font-weight:600">
-      👁 View all assemblies combined
-    </button>
-    <button onclick="signOut()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:12px;padding:10px">
-      Sign out
-    </button>
-  </div>
-  <div style="position:absolute;bottom:20px;color:rgba(255,255,255,0.4);font-size:11px;text-align:center">
-    Signed in as <strong id="asmUserName" style="color:rgba(255,255,255,0.7)"></strong>
-    &nbsp;·&nbsp; EWC CMS
-  </div>
-</div>
 
 
